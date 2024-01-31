@@ -1,0 +1,31 @@
+Metadata-Version: 2.1
+Name: apache-sedona
+Version: 1.5.1
+Summary: Apache Sedona is a cluster computing system for processing large-scale spatial data
+Home-page: https://sedona.apache.org
+Author: Apache Sedona
+Author-email: dev@sedona.apache.org
+License: Apache License v2.0
+Project-URL: Documentation, https://sedona.apache.org
+Project-URL: Source code, https://github.com/apache/sedona
+Project-URL: Bug Reports, https://issues.apache.org/jira/projects/SEDONA
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: Apache Software License
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown
+Requires-Dist: attrs
+Requires-Dist: shapely (>=1.7.0)
+Provides-Extra: spark
+Requires-Dist: pyspark (>=2.3.0) ; extra == 'spark'
+
+# Apache Sedona
+
+This library is the Python wrapper for Apache Sedona.
+
+Apache Sedona is a cluster computing system for processing large-scale spatial data.
+Apache Sedona extends Apache Spark / SparkSQL with a set of out-of-the-box Spatial Resilient Distributed Datasets (SRDDs)/ SpatialSQL that efficiently load, process, and analyze large-scale spatial data across machines.
+
+Please visit the official Apache Sedona website:
+https://sedona.apache.org/
+
+Development environment setup docs: https://sedona.apache.org/latest-snapshot/setup/compile/#run-python-test

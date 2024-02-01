@@ -31,3 +31,26 @@ services:
         KAFKA_ADVERTISED_LISTENERS: INTERNAL://broker:9092, EXTERNAL_SAME_HOST://localhost:29092
         KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
         KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  connector:
+    image: confluentinc/cp-kafka-connect-base
+    command: confluent-hub install --no-prompt confluentinc/kafka-connect-s3:latest
+    hostname: connector
+    container_name: connector
+    depends_on:
+      - zookeeper
+      - broker
+    environment:
+        CONNECT_BOOTSTRAP_SERVERS: borker:9092
+        #CONNECT_REST_PORT: # what the fuck is this?
+        CONNECT_GROUP_ID: "quickstart"
+        CONNECT_CONFIG_STORAGE_TOPIC: "quickstart-config"
+        CONNECT_OFFSET_STORAGE_TOPIC: "quickstart-offsets"
+        CONNECT_STATUS_STORAGE_TOPIC: "quickstart-status"
+        CONNECT_KEY_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+        CONNECT_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+        CONNECT_INTERNAL_KEY_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+        CONNECT_INTERNAL_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+        CONNECT_REST_ADVERTISED_HOST_NAME: connector
+        CONNECT_PLUGIN_PATH: /usr/share/confluent-hub-components
+      

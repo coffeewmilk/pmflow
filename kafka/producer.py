@@ -10,7 +10,7 @@ latlong1 = ['13.898819', '100.415717']
 latlong2 = ['13.579757', '100.683936']
 
 # initiate 
-producer = KafkaProducer(bootstrap_servers=['localhost:29092'], value_serializer=lambda m: m.encode(), max_block_ms = 5000)
+producer = KafkaProducer(bootstrap_servers=['broker:9092'], value_serializer=lambda m: m.encode(), max_block_ms = 5000)
 print("successfuly initiate")
 
 def PMunit():
@@ -34,7 +34,7 @@ def on_send_error(excp):
 while True:
     
     producer.send('myTopic', PMunit()).add_callback(on_send_success).add_errback(on_send_error)
-    time.sleep(0.1)
+    time.sleep(1)
 
 
 

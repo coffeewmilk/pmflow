@@ -66,4 +66,12 @@ services:
         CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
         CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
   
-    
+
+  python:
+    image: python:3.11
+    container_name: python
+    working_dir: /usr/src/app
+    volumes:
+      - $PWD/requirements.txt:/usr/src/app/requirements.txt
+      - $PWD/kafka:/usr/src/app/kafka
+    command: bash -c "pip install --no-cache-dir -r requirements.txt && python ./kafka/producer.py"

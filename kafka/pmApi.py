@@ -4,6 +4,7 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import col
 import json
 import time
+from sedona.spark import *
 
 aqicnKey = '[aqicnKey]'
 latlong1 = ['13.898819', '100.415717']
@@ -44,7 +45,13 @@ if __name__ == "__main__":
     .builder \
     .appName("Python Spark SQL basic example") \
     .config("spark.some.config.option", "some-value") \
+    .config('spark.jars.packages',
+           'org.apache.sedona:sedona-spark-3.0_2.12:1.5.1,'
+           'org.datasyslab:geotools-wrapper:1.5.1-28.2'). \
+    config('spark.jars.repositories', 'https://artifacts.unidata.ucar.edu/repository/unidata-all') \
     .getOrCreate()
+
+    sedona = SedonaContext.create(spark)
 
     #pmFetch(spark).show()
 

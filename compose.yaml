@@ -31,6 +31,7 @@ services:
         KAFKA_ADVERTISED_LISTENERS: INTERNAL://broker:9092, EXTERNAL_SAME_HOST://localhost:29092
         KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
         KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+        KAFKA_CONFLUENT_SCHEMA_REGISTRY_URL: http://schema_registry:8081
 
   connector:
     image: confluentinc/cp-kafka-connect-base
@@ -67,11 +68,30 @@ services:
         CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
   
 
+  schema-registry:
+    image: confluentinc/cp-schema-registry
+    hostname: schema-registry
+    container_name: schema-registry
+    depends_on:
+      - broker
+    ports:
+      - "8081:8081"
+    environment:
+        SCHEMA_REGISTRY_HOST_NAME: schema-registry
+        SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'broker:9092'
+        SCHEMA_REGISTRY_LISTENERS: 'http://0.0.0.0:8081'
+      
+
+
   python:
     image: python:3.11
     container_name: python
     working_dir: /usr/src/app
+    depends_on:
+      - broker
     volumes:
       - $PWD/requirements.txt:/usr/src/app/requirements.txt
       - $PWD/kafka:/usr/src/app/kafka
-    command: bash -c "pip install --no-cache-dir -r requirements.txt && python ./kafka/producer.py"
+      - $PWD/avro:/usr/src/app/avro
+    command: bash -c "apt update && apt install -y openjdk-17-jdk && pip install --no-cache-dir -r requirements.txt && python ./kafka/pmflow_avro.py"
+

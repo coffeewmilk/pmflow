@@ -1,0 +1,13 @@
+{
+ "namespace" : "pmflow",
+ "type": "record",
+ "name": "pmRecord",
+ "fields": [
+     {"name": "station", "type": "string"},
+     {"name": "district", "type": "string"},
+     {"name": "aqi", "type": "double"},
+     {"name": "lat", "type": "double"},
+     {"name": "lon", "type": "double"},
+     {"name": "time", "type": "string"}
+ ]
+}

@@ -95,3 +95,28 @@ services:
       - $PWD/avro:/usr/src/app/avro
     command: bash -c "apt update && apt install -y openjdk-17-jdk && pip install --no-cache-dir -r requirements.txt && python ./kafka/pmflow_avro.py"
 
+
+  pyspark:
+    image: bitnami/spark:latest
+    container_name: spark
+    working_dir: /usr/src/app
+    user: root
+    depends_on:
+      - broker
+    volumes:
+      - $PWD/requirements.txt:/usr/src/app/requirements.txt
+      - $PWD/kafka:/usr/src/app/kafka
+      - $PWD/avro:/usr/src/app/avro
+    command: 
+      - bash 
+      - -c 
+      - |
+        apt update && apt install -y openjdk-17-jdk
+        pip install --no-cache-dir -r requirements.txt
+        spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0,org.apache.spark:spark-avro_2.12:3.5.0,org.apache.sedona:sedona-spark-shaded-3.5_2.12:1.5.1,org.datasyslab:geotools-wrapper:1.5.1-28.2,edu.ucar:cdm-core:5.4.2\
+                     --repositories https://artifacts.unidata.ucar.edu/content/repositories/unidata-releases\
+                      ./kafka/pmflow_avro.py
+
+
+
+    

@@ -11,18 +11,20 @@ from sedona.spark import *
 from kafka import KafkaProducer
 from pyspark.sql.functions import col
 
+
 # a unique appName for each job?
 def create_spark_connection():
     spark = None
     try:
         spark = SparkSession \
             .builder \
-            .appName("pmflow") \
-            .config('spark.jars.packages',
-                'org.apache.sedona:sedona-spark-3.0_2.12:1.5.1,'
-                'org.datasyslab:geotools-wrapper:1.5.1-28.2') \
-            .config('spark.jars.repositories', 'https://artifacts.unidata.ucar.edu/repository/unidata-all') \
-            .getOrCreate()
+            .appName("pmflow").getOrCreate()
+            # .config('spark.jars.packages',
+            #     'org.apache.sedona:sedona-spark-3.0_2.12:1.5.1,'
+            #     'org.datasyslab:geotools-wrapper:1.5.1-28.2,'
+            #     'org.apache.spark:spark-avro_2.12:3.5.0') \
+            # .config('spark.jars.repositories', 'https://artifacts.unidata.ucar.edu/repository/unidata-all') \
+            
         # bypass spark with sedona
         sedona = sedona = SedonaContext.create(spark)
         logging.info("Spark connection created, actually sedona")

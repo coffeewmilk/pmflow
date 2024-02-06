@@ -7,7 +7,8 @@ import logging
 
 from pyspark.sql import SparkSession
 from sedona.spark import *
-from pyspark.sql.functions import col
+from pyspark.sql.functions import col, struct
+from pyspark.sql.avro.functions import from_avro, to_avro
 
 from confluent_kafka import Producer
 from confluent_kafka.serialization import StringSerializer, SerializationContext, MessageField
@@ -16,81 +17,33 @@ from confluent_kafka.schema_registry.avro import AvroSerializer
 
 from pmflow import create_spark_connection, fetch_data_from_aqin, label_district_by_df, create_district_view
 
-def row_to_dict(row, ctx):
-    return dict(station=row.station,
-                district=row.district,
-                aqi=row.aqi,
-                lat=row.lat,
-                lon=row.lon,
-                time=row.time)
+def send_dataframe_to_kafka(df): #nope this is not right
+    pass
 
-def delivery_report(err, msg):
-    if err is not None:
-        print(f"Failed to delivery due to {err}")
-        return
-    print("a record produced successfully")
+def send_df_to_kafka(df):
+    df.select(to_avro("value").alias("value"))\
+       .write \
+       .format("kafka") \
+       .option("kafka.bootstrap.servers", "broker:9092") \
+       .option("topic", "pmflow") \
+       .save()
 
-def create_serializer(filename):
-    path = os.path.realpath(os.path.dirname(os.path.dirname(__file__)))
-    with open(f"{path}/avro/{filename}") as f:
-        schema_str = f.read()
-    schema_registry_conf = {'url': 'http://schema-registry:8081'}
-    schema_registry_client = SchemaRegistryClient(schema_registry_conf)
+def transform_avro_format(df):
+    avroFormat = df.withColumn("value",
+                  struct(
+                         col("aqi").alias("aqi"),
+                         col("name").alias("name"),
+                         col("ADM2_EN").alias("district"),
+                         col("lat").alias("lat"),
+                         col("lon").alias("lon"),
+                         col("time").alias("time"))).select("value")
+    avroFormat.printSchema()
+    return avroFormat
 
-    # alternative way?
-    global avro_serializer
-    global string_serializer
-    
-    avro_serializer = AvroSerializer(schema_registry_client,
-                                     schema_str,
-                                     row_to_dict)
-
-    string_serializer = StringSerializer('utf_8')
-
-def create_producer():
-    producer_conf = {'bootstrap.servers': 'broker:9092'}
-    
-    # alternative way?
-    global producer
-    producer = Producer(producer_conf)
-
-def produce_data(data):
-    producer.produce(topic='topic',
-                             value=avro_serializer(data, SerializationContext('topic', MessageField.VALUE)),
-                             on_delivery=delivery_report)
-
-def produce_data_map_partition(iterator):
-    producer_map = Producer({'bootstrap.servers': 'broker:9092'}.copy())  # Configure your Kafka producer here
-    for row in iterator:
-        producer_map.produce(
-            topic='topic',
-            value=avro_serializer(row, SerializationContext('topic', MessageField.VALUE)),
-            on_delivery=delivery_report
-        )
-    producer.flush()
-
-
-def produce_df(df):
-    #df.foreach(produce_data)
-    test = df.rdd.foreachPartition(produce_data_map_partition)
-    test.count()
-
-
-if __name__ == "__main__":
-    try:
-        create_producer()
-        create_serializer('record.avsc')
-
-    except Exception as e:
-        print(f"Unable to create producer or serializer due to {e}")
-        exit()
-    
+if __name__ == '__main__':
     spark = create_spark_connection()
-    print("Successfully created spark connection")
+    data = fetch_data_from_aqin(spark)
     create_district_view(spark)
-    
-    while True:
-        data = fetch_data_from_aqin(spark)
-        labeledData = label_district_by_df(data, spark)
-        produce_df(labeledData)
-        time.sleep(1)
+    labelData = label_district_by_df(data, spark)
+    transformed = transform_avro_format(labelData)
+    send_df_to_kafka(transformed)

@@ -33,16 +33,6 @@ def create_spark_connection():
     
     return sedona
 
-# this could be a class
-def create_kafka_producer():
-    producer = None
-    try:
-        producer = KafkaProducer(bootstrap_servers=['broker:9092'], max_block_ms = 5000)
-        logging.info("successfuly initiate")
-    except Exception as e:
-        logging.error(f"Unable to create Kafka producer due to {e}")
-    
-    return producer
 
 def fetch_data_from_aqin(spark):
     aqicnKey = '[aqicnKey]' # to be filled
@@ -56,17 +46,6 @@ def fetch_data_from_aqin(spark):
     except Exception as e:
         logging.error(f"Unable to retrive data from aqin due to {e}")
     return data
-
-def on_send_success(record_metadata):
-    print(record_metadata.topic)
-    print(record_metadata.partition)
-    print(record_metadata.offset)
-
-def on_send_error(excp):
-    print('I am an errback ', exc_info=excp)
-
-def send_data_to_kafka(producer, data):
-    producer.send('pmflow', data).add_callback(on_send_success).add_errback(on_send_error)
 
 def create_district_view(spark):
     try:
@@ -87,10 +66,6 @@ def label_district_by_df(df, spark):
         logging.error(f"Unable to label district due to {e}")
     return labeled
 
-def send_dataframe_to_kafka(producer, df):
-    # just send it as avro format
-    dataAvro = df.write.format("avro")
-    send_data_to_kafka(producer, dataAvro)
 
 def updated_row(dfOld, dfNew):
     columns = ['aqi', 'name']
@@ -98,22 +73,6 @@ def updated_row(dfOld, dfNew):
     rowUpdated = dfOld.join(intersectDf, on='name', how='leftanti')
     return rowUpdated
     
-
-if __name__ == "__main__":
-    spark = create_spark_connection()
-    producer = create_kafka_producer()
-    if spark == None or producer == None:
-        exit
-    
-    initilizeData = fetch_data_from_aqin(spark)
-    send_dataframe_to_kafka(producer, initilizeData)
-
-    while True:
-        time.sleep(1)
-        newData = fetch_data_from_aqin(spark)
-        updatedRow = updated_row(initilizeData, newData)
-        send_dataframe_to_kafka(producer, updatedRow)
-        initilizeData = newData
         
         
 

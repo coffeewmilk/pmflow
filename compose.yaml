@@ -42,6 +42,7 @@ services:
 
     hostname: connector
     container_name: connector
+    user: root
     ports:
       - "8083:8083"
     depends_on:
@@ -57,8 +58,10 @@ services:
         CONNECT_CONFIG_STORAGE_TOPIC: "quickstart-config"
         CONNECT_OFFSET_STORAGE_TOPIC: "quickstart-offsets"
         CONNECT_STATUS_STORAGE_TOPIC: "quickstart-status"
-        CONNECT_KEY_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
-        CONNECT_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+        CONNECT_KEY_CONVERTER: "io.confluent.connect.avro.AvroConverter"
+        CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: "http://schema-registry:8081"
+        CONNECT_VALUE_CONVERTER: "io.confluent.connect.avro.AvroConverter"
+        CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: "http://schema-registry:8081"
         CONNECT_INTERNAL_KEY_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
         CONNECT_INTERNAL_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
         CONNECT_REST_ADVERTISED_HOST_NAME: localhost
@@ -93,7 +96,7 @@ services:
       - $PWD/requirements.txt:/usr/src/app/requirements.txt
       - $PWD/kafka:/usr/src/app/kafka
       - $PWD/avro:/usr/src/app/avro
-    command: bash -c "apt update && apt install -y openjdk-17-jdk && pip install --no-cache-dir -r requirements.txt && python ./kafka/pmflow_avro.py"
+    command: bash -c "apt update && apt install -y openjdk-17-jdk && pip install --no-cache-dir -r requirements.txt"
 
 
   pyspark:

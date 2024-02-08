@@ -12,10 +12,10 @@ curl -i -X PUT -H "Accept:application/json" \
 		"format.class": "io.confluent.connect.s3.format.avro.AvroFormat",
 	    "partitioner.class": "io.confluent.connect.storage.partitioner.TimeBasedPartitioner",
         "path.format": "'\'year\''=YYYY/'\'month\''=MM/'\'day\''=dd/'\'hour\''=HH",
-        "partition.duration.ms": "300000",
+        "partition.duration.ms": "3000",
         "locale": "en-US",
         "timezone": "UTC",
         "timestamp.extractor": "Wallclock",
-        "flush.size":"65536"
+        "flush.size":"10"
 	}
 '

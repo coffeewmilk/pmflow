@@ -46,7 +46,6 @@ services:
     ports:
       - "8083:8083"
     depends_on:
-      - zookeeper
       - broker
     volumes:
       - $PWD/credentials:/root/.aws/credentials
@@ -87,27 +86,38 @@ services:
         SCHEMA_REGISTRY_LISTENERS: 'http://0.0.0.0:8081'
       
 
-
-  python:
-    image: python:3.11
-    container_name: python
-    working_dir: /usr/src/app
+  alpine:
+    image: alpine:latest
+    container_name: alpine
+    working_dir: /scripts
     depends_on:
-      - broker
+      - schema-registry
+      - connector
     volumes:
-      - $PWD/requirements.txt:/usr/src/app/requirements.txt
-      - $PWD/kafka:/usr/src/app/kafka
-      - $PWD/avro:/usr/src/app/avro
-    command: bash -c "apt update && apt install -y openjdk-17-jdk && pip install --no-cache-dir -r requirements.txt"
+      - $PWD/avro:/scripts/avro
+      - $PWD/connectors:/scripts/connectors
+    command:
+      - sh 
+      - -c 
+      - |
+        apk update --no-cache 
+        apk --no-cache add curl
+        apk add --no-cache wget openssl 
+        wget -O - https://github.com/jwilder/dockerize/releases/download/v0.7.0/dockerize-linux-amd64-v0.7.0.tar.gz | tar xzf - -C /usr/local/bin 
+        apk del wget
+        dockerize -wait http://connector:8083  - wait http://schema-registry:8081 -timeout 1m
+        sh ./avro/init_schema.sh
+        sh ./connectors/init_s3_connector.sh
 
 
   pyspark:
-    image: bitnami/spark:latest
+    image: bitnami/spark:3.5.0
     container_name: spark
     working_dir: /usr/src/app
     user: root
     depends_on:
       - broker
+      - alpine
     volumes:
       - $PWD/requirements.txt:/usr/src/app/requirements.txt
       - $PWD/kafka:/usr/src/app/kafka

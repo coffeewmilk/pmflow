@@ -49,7 +49,7 @@ def toAvroSchema(df):
     jvm_gateway = spark.sparkContext._active_spark_context._gateway.jvm
     return jvm_gateway.za.co.absa.abris.avro.parsing.utils.AvroSchemaUtils.toAvroSchema(df._jdf, ('value',))
 
-def to_avro_abris_config(config_map, id):
+def to_avro_abris_config(config_map):
     """
     This function is copied from ABRIS github, with modification on sparkcontext
     """
@@ -96,5 +96,5 @@ if __name__ == '__main__':
         labelData = label_district_by_df(data, spark)
         transformed = transform_avro_format(labelData)
         
-        to_avro_abris_settings = to_avro_abris_config({'schema.registry.url': 'http://schema-registry:8081'}, 3)
+        to_avro_abris_settings = to_avro_abris_config({'schema.registry.url': 'http://schema-registry:8081'})
         send_df_to_kafka(transformed, to_avro_abris_settings)

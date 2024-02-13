@@ -1,7 +1,7 @@
 services:
   zookeeper:
     image: confluentinc/cp-zookeeper
-    hostname: zookeeper # nessessary?
+    hostname: zookeeper 
     container_name: zookeeper
     ports:
       - "2181:2181"
@@ -16,7 +16,7 @@ services:
   
   broker:
     image: confluentinc/cp-kafka
-    hostname: broker # nessessary?
+    hostname: broker 
     container_name: broker
     depends_on:
         zookeeper:
@@ -38,7 +38,8 @@ services:
     command: 
       - bash 
       - -c
-      - confluent-hub install --no-prompt confluentinc/kafka-connect-s3:latest && /etc/confluent/docker/run && sleep infinity
+      - confluent-hub install --no-prompt confluentinc/kafka-connect-s3:latest
+      - confluent-hub install --no-prompt confluentinc/kafka-connect-hdfs3:latest && /etc/confluent/docker/run && sleep infinity
 
     hostname: connector
     container_name: connector
@@ -105,7 +106,7 @@ services:
         apk add --no-cache wget openssl 
         wget -O - https://github.com/jwilder/dockerize/releases/download/v0.7.0/dockerize-linux-amd64-v0.7.0.tar.gz | tar xzf - -C /usr/local/bin 
         apk del wget
-        dockerize -wait http://connector:8083  - wait http://schema-registry:8081 -timeout 1m
+        dockerize -wait http://connector:8083  - wait http://schema-registry:8081 -timeout 2m
         sh ./avro/init_schema.sh
         sh ./connectors/init_s3_connector.sh
 
@@ -137,6 +138,30 @@ services:
                      --repositories https://artifacts.unidata.ucar.edu/content/repositories/unidata-releases,https://repo1.maven.org/maven2,https://packages.confluent.io/maven \
                       ./kafka/pmflow_avro.py
 
-
-
-    
+  namenode:
+    image: apache/hadoop:3.3.6
+    platform: linux/amd64
+    container_name: namenode
+    hostname: namenode
+    command: 
+      - bash 
+      - -c 
+      - hdfs namenode
+    ports:
+      - 9870:9870
+      - 50070:50070
+    env_file:
+      - ./hadoop/config
+    environment:
+        ENSURE_NAMENODE_DIR: "/tmp/hadoop-root/dfs/name"
+  
+  datanode:
+    image: apache/hadoop:3.3.6
+    platform: linux/amd64
+    container_name: datanode
+    command: ["hdfs", "datanode"]
+    depends_on:
+      - namenode
+    env_file:
+      - ./hadoop/config  
+  

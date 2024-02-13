@@ -16,6 +16,6 @@ curl -i -X PUT -H "Accept:application/json" \
         "locale": "en-US",
         "timezone": "UTC",
         "timestamp.extractor": "Wallclock",
-        "flush.size":"10"
+        "flush.size":"1000"
 	}
 '

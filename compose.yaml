@@ -112,8 +112,8 @@ services:
         apk del wget
         dockerize -wait http://connector:8083  -wait http://schema-registry:8081 -wait http://hdfs:9870 -timeout 2m
         sh ./avro/init_schema.sh
-        sh ./connectors/init_s3_connector.sh
         sh ./hadoop/init_directory_hdfs.sh
+        sh ./connectors/init_hdfs_connector.sh
 
 
   pyspark:

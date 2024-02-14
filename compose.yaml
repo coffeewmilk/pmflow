@@ -38,8 +38,11 @@ services:
     command: 
       - bash 
       - -c
-      - confluent-hub install --no-prompt confluentinc/kafka-connect-s3:latest
-      - confluent-hub install --no-prompt confluentinc/kafka-connect-hdfs3:latest && /etc/confluent/docker/run && sleep infinity
+      - |
+        confluent-hub install --no-prompt confluentinc/kafka-connect-s3:latest
+        confluent-hub install --no-prompt confluentinc/kafka-connect-hdfs3:latest
+        /etc/confluent/docker/run
+        sleep infinity
 
     hostname: connector
     container_name: connector
@@ -97,6 +100,7 @@ services:
     volumes:
       - $PWD/avro:/scripts/avro
       - $PWD/connectors:/scripts/connectors
+      - $PWD/hadoop:/scripts/hadoop
     command:
       - sh 
       - -c 
@@ -106,9 +110,10 @@ services:
         apk add --no-cache wget openssl 
         wget -O - https://github.com/jwilder/dockerize/releases/download/v0.7.0/dockerize-linux-amd64-v0.7.0.tar.gz | tar xzf - -C /usr/local/bin 
         apk del wget
-        dockerize -wait http://connector:8083  - wait http://schema-registry:8081 -timeout 2m
+        dockerize -wait http://connector:8083  -wait http://schema-registry:8081 -wait http://hdfs:9870 -timeout 2m
         sh ./avro/init_schema.sh
         sh ./connectors/init_s3_connector.sh
+        sh ./hadoop/init_directory_hdfs.sh
 
 
   pyspark:
@@ -138,30 +143,11 @@ services:
                      --repositories https://artifacts.unidata.ucar.edu/content/repositories/unidata-releases,https://repo1.maven.org/maven2,https://packages.confluent.io/maven \
                       ./kafka/pmflow_avro.py
 
-  namenode:
-    image: apache/hadoop:3.3.6
-    platform: linux/amd64
-    container_name: namenode
-    hostname: namenode
-    command: 
-      - bash 
-      - -c 
-      - hdfs namenode
+  hdfs:
+    image: mtsrus/hadoop:hadoop3-hdfs
+    restart: no
+    container_name: hdfs
+    hostname: hdfs
     ports:
-      - 9870:9870
-      - 50070:50070
-    env_file:
-      - ./hadoop/config
-    environment:
-        ENSURE_NAMENODE_DIR: "/tmp/hadoop-root/dfs/name"
-  
-  datanode:
-    image: apache/hadoop:3.3.6
-    platform: linux/amd64
-    container_name: datanode
-    command: ["hdfs", "datanode"]
-    depends_on:
-      - namenode
-    env_file:
-      - ./hadoop/config  
-  
+    - 9820:9820  # HDFS IPC
+    - 9870:9870  # HDFS WebHDFS

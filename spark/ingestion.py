@@ -11,11 +11,6 @@ from pyspark.sql.functions import col, struct
 from pyspark.sql.column import Column, _to_java_column
 #from pyspark.sql.avro.functions import from_avro, to_avro
 
-from confluent_kafka import Producer
-from confluent_kafka.serialization import StringSerializer, SerializationContext, MessageField
-from confluent_kafka.schema_registry import SchemaRegistryClient
-from confluent_kafka.schema_registry.avro import AvroSerializer
-
 def create_spark_connection():
     spark = None
     try:

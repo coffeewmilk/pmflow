@@ -6,6 +6,7 @@
         \"name\": \"pmRecord\",
         \"fields\": [
             {\"name\": \"aqi\", \"type\": \"string\"},
+            {\"name\": \"uid\", \"type\": \"int\"},
             {\"name\": \"name\", \"type\": \"string\"},
             {\"name\": \"district\", \"type\": \"string\"},
             {\"name\": \"lat\", \"type\": \"double\"},

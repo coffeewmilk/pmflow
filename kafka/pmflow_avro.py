@@ -77,6 +77,7 @@ def transform_avro_format(df):
     avroFormat = df.withColumn("value",
                   struct(
                          col("aqi").alias("aqi"),
+                         col("uid").alias("uid"),
                          col("name").alias("name"),
                          col("ADM2_EN").alias("district"),
                          col("lat").alias("lat"),

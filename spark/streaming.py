@@ -57,7 +57,7 @@ if __name__ == "__main__":
         .option("subscribe", "pmflow") \
         .load()
     
-    fromAvro = df.select(from_avro("value", from_avro_abris_settings))
+    fromAvro = df.select(from_avro("value", from_avro_abris_settings)).select("value.*")
     query = fromAvro \
             .writeStream \
             .outputMode("append") \

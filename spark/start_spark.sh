@@ -14,4 +14,4 @@ https://packages.confluent.io/maven \
 # spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0,\
 # za.co.absa:abris_2.12:6.4.0 \
 #             --repositories https://repo1.maven.org/maven2 \
-#             ./spark/stream.py | sed 's/^/| STREAM | /g' &
+#             ./spark/streaming.py | sed 's/^/| STREAM | /g' &

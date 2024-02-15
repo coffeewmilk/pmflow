@@ -126,7 +126,7 @@ services:
       - alpine
     volumes:
       - $PWD/requirements.txt:/usr/src/app/requirements.txt
-      - $PWD/kafka:/usr/src/app/kafka
+      - $PWD/spark:/usr/src/app/spark
       - $PWD/avro:/usr/src/app/avro
     command: 
       - bash 
@@ -141,7 +141,7 @@ services:
         edu.ucar:cdm-core:5.4.2,\
         za.co.absa:abris_2.12:6.4.0\
                      --repositories https://artifacts.unidata.ucar.edu/content/repositories/unidata-releases,https://repo1.maven.org/maven2,https://packages.confluent.io/maven \
-                      ./kafka/pmflow_avro.py
+                      ./spark/ingestion.py
 
   hdfs:
     image: mtsrus/hadoop:hadoop3-hdfs

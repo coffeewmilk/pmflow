@@ -1,7 +1,7 @@
 import logging
 
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col
+from pyspark.sql.functions import col, to_timestamp, max as max_, last, avg
 from pyspark.sql.column import Column, _to_java_column
 
 def create_spark_connection():
@@ -15,6 +15,7 @@ def create_spark_connection():
                     'za.co.absa:abris_2.12:6.4.0,'
                     'org.apache.spark:spark-avro_2.12:3.5.0') \
             .config('spark.jars.repositories','https://repo1.maven.org/maven2') \
+            .config('spark.sql.streaming.statefulOperator.checkCorrectness.enabled', 'false') \
             .getOrCreate()
         logging.info("Spark connection created")
 
@@ -57,12 +58,25 @@ if __name__ == "__main__":
         .option("subscribe", "pmflow") \
         .load()
     
-    fromAvro = df.select(from_avro("value", from_avro_abris_settings)).select("value.*")
-    query = fromAvro \
+   
+
+    explodedAvro = df.withWatermark("timestamp", "5 minutes").select(from_avro("value", from_avro_abris_settings).alias("value")).select("value.*")
+    convertTime = explodedAvro.withColumn("time", to_timestamp(col("time")).alias("time"))
+
+    # get the latest record for each station, assuming there will be no unorderly data
+    # Work around is needed since the traditional join doesn't work on streaming data
+    latestTable = convertTime.groupBy("uid").agg(last("time"), last("district"), last("name"), last("aqi"), last("lat"), last("lon")) \
+                             .toDF("uid", "time", "district", "name", "aqi", "lat", "lon")
+    
+    averagePerDistrict = latestTable.groupBy("district").agg(avg("aqi").alias("aqi"), last("time").alias("time"))
+
+   
+    query = averagePerDistrict \
             .writeStream \
-            .outputMode("append") \
+            .outputMode("complete") \
             .format("console") \
             .start()
+    
     
     query.awaitTermination()
 

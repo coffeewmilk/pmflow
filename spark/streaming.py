@@ -1,7 +1,7 @@
 import logging
 
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, to_timestamp, max as max_, last, avg
+from pyspark.sql.functions import col, to_timestamp, max as max_, last, avg, max_by, min_by, date_format
 from pyspark.sql.column import Column, _to_java_column
 
 def create_spark_connection():
@@ -56,22 +56,31 @@ if __name__ == "__main__":
         .format("kafka") \
         .option("kafka.bootstrap.servers", "broker:9092") \
         .option("subscribe", "pmflow") \
+        .option("startingOffsets", "earliest") \
         .load()
-    
+    # to do implement spark hdfs checkpoint!
    
 
     explodedAvro = df.withWatermark("timestamp", "5 minutes").select(from_avro("value", from_avro_abris_settings).alias("value")).select("value.*")
-    convertTime = explodedAvro.withColumn("time", to_timestamp(col("time")).alias("time"))
+    convertTime = explodedAvro.withColumn("timestamp", to_timestamp(col("time")))
 
     # get the latest record for each station, assuming there will be no unorderly data
     # Work around is needed since the traditional join doesn't work on streaming data
-    latestTable = convertTime.groupBy("uid").agg(last("time"), last("district"), last("name"), last("aqi"), last("lat"), last("lon")) \
-                             .toDF("uid", "time", "district", "name", "aqi", "lat", "lon")
+    # use max_by for spark 3.0+
+    latestTable = convertTime.groupBy("uid").agg(last("timestamp"), 
+                                                 last("district"), 
+                                                 last("name"), 
+                                                 last("aqi"), 
+                                                 last("lat"), 
+                                                 last("lon")) \
+                             .toDF("uid", "timestamp", "district", "name", "aqi", "lat", "lon") \
+                             .withColumn("date", date_format("timestamp", "yyyy-MM-dd")) \
+                             .withColumn("time", date_format("timestamp", "HH:mm:ss"))
     
     averagePerDistrict = latestTable.groupBy("district").agg(avg("aqi").alias("aqi"), last("time").alias("time"))
 
    
-    query = averagePerDistrict \
+    query = latestTable \
             .writeStream \
             .outputMode("complete") \
             .format("console") \

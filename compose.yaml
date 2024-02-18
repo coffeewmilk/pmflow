@@ -101,6 +101,7 @@ services:
       - $PWD/avro:/scripts/avro
       - $PWD/connectors:/scripts/connectors
       - $PWD/hadoop:/scripts/hadoop
+      - ./cassandra:/scripts/cassandra
     command:
       - sh 
       - -c 
@@ -110,10 +111,11 @@ services:
         apk add --no-cache wget openssl 
         wget -O - https://github.com/jwilder/dockerize/releases/download/v0.7.0/dockerize-linux-amd64-v0.7.0.tar.gz | tar xzf - -C /usr/local/bin 
         apk del wget
-        dockerize -wait http://connector:8083  -wait http://schema-registry:8081 -wait http://hdfs:9870 -timeout 2m
+        dockerize -wait http://connector:8083  -wait http://schema-registry:8081 -wait http://hdfs:9870  -wait http://cassandra:8082 -timeout 2m
         sh ./avro/init_schema.sh
         sh ./hadoop/init_directory_hdfs.sh
         sh ./connectors/init_hdfs_connector.sh
+        sh ./cassandra/init_tables.sh
 
 
   pyspark:
@@ -144,3 +146,24 @@ services:
     ports:
     - 9820:9820  # HDFS IPC
     - 9870:9870  # HDFS WebHDFS
+
+  cassandra:
+    image: stargateio/stargate-4_0:v1.0.57
+    container_name: cassandra
+    hostname: cassandra
+    ports:
+      - 8082:8082 # REST for CRUD
+      - 8085:8081 # auth services
+      - 9042:9042 # CQL service
+      - 8084:8084 # Health check
+    volumes:
+      - ./cassandra:/home/cassandria_script
+    environment:
+        CLUSTER_NAME: stargate
+        CLUSTER_VERSION: 4.0
+        DEVELOPER_MODE: true
+
+
+
+  
+    

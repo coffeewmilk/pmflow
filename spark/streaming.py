@@ -1,7 +1,7 @@
 import logging
 
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, to_timestamp, max as max_, last, avg, max_by, min_by, date_format
+from pyspark.sql.functions import col, to_timestamp, max as max_, last, avg, max_by, date_format 
 from pyspark.sql.column import Column, _to_java_column
 
 def create_spark_connection():
@@ -13,9 +13,14 @@ def create_spark_connection():
             .config('spark.jars.packages',
                     'org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0,'
                     'za.co.absa:abris_2.12:6.4.0,'
-                    'org.apache.spark:spark-avro_2.12:3.5.0') \
+                    'org.apache.spark:spark-avro_2.12:3.5.0,'
+                    '') \
             .config('spark.jars.repositories','https://repo1.maven.org/maven2') \
             .config('spark.sql.streaming.statefulOperator.checkCorrectness.enabled', 'false') \
+            .config('spark.sql.extensions', 'com.datastax.spark.connector.CassandraSparkExtensions') \
+            .config('spark.jars', 'jars/spark-cassandra-connector-assembly-3.4.1-4-g05ca11a5.jar') \
+            .config('spark.sql.catalog.cass100', 'com.datastax.spark.connector.datasource.CassandraCatalog') \
+            .config('spark.sql.catalog.cass100.spark.cassandra.connection.host', 'cassandra') \
             .getOrCreate()
         logging.info("Spark connection created")
 
@@ -58,7 +63,7 @@ if __name__ == "__main__":
         .option("subscribe", "pmflow") \
         .option("startingOffsets", "earliest") \
         .load()
-    # to do implement spark hdfs checkpoint!
+    # to do: implement spark hdfs checkpoint!
    
 
     explodedAvro = df.withWatermark("timestamp", "5 minutes").select(from_avro("value", from_avro_abris_settings).alias("value")).select("value.*")
@@ -67,12 +72,12 @@ if __name__ == "__main__":
     # get the latest record for each station, assuming there will be no unorderly data
     # Work around is needed since the traditional join doesn't work on streaming data
     # use max_by for spark 3.0+
-    latestTable = convertTime.groupBy("uid").agg(last("timestamp"), 
-                                                 last("district"), 
-                                                 last("name"), 
-                                                 last("aqi"), 
-                                                 last("lat"), 
-                                                 last("lon")) \
+    latestTable = convertTime.groupBy("uid").agg(max_("timestamp"), 
+                                                 max_by("district", "timestamp"), 
+                                                 max_by("name", "timestamp"), 
+                                                 max_by("aqi", "timestamp"), 
+                                                 max_by("lat", "timestamp"), 
+                                                 max_by("lon", "timestamp")) \
                              .toDF("uid", "timestamp", "district", "name", "aqi", "lat", "lon") \
                              .withColumn("date", date_format("timestamp", "yyyy-MM-dd")) \
                              .withColumn("time", date_format("timestamp", "HH:mm:ss"))
@@ -80,13 +85,13 @@ if __name__ == "__main__":
     averagePerDistrict = latestTable.groupBy("district").agg(avg("aqi").alias("aqi"), last("time").alias("time"))
 
    
-    query = latestTable \
-            .writeStream \
-            .outputMode("complete") \
-            .format("console") \
-            .start()
+    # query = latestTable \
+    #         .writeStream \
+    #         .outputMode("complete") \
+    #         .format("console") \
+    #         .start()
+    spark.read.table("cass100.pmflow.aqi_by_district_date_time").show()
     
-    
-    query.awaitTermination()
+    # query.awaitTermination()
 
     

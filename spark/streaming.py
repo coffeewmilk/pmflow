@@ -19,8 +19,8 @@ def create_spark_connection():
             .config('spark.sql.streaming.statefulOperator.checkCorrectness.enabled', 'false') \
             .config('spark.sql.extensions', 'com.datastax.spark.connector.CassandraSparkExtensions') \
             .config('spark.jars', 'jars/spark-cassandra-connector-assembly-3.4.1-4-g05ca11a5.jar') \
-            .config('spark.sql.catalog.cass100', 'com.datastax.spark.connector.datasource.CassandraCatalog') \
-            .config('spark.sql.catalog.cass100.spark.cassandra.connection.host', 'cassandra') \
+            .config('spark.sql.catalog.cassandra', 'com.datastax.spark.connector.datasource.CassandraCatalog') \
+            .config('spark.sql.catalog.cassandra.spark.cassandra.connection.host', 'cassandra') \
             .getOrCreate()
         logging.info("Spark connection created")
 
@@ -52,6 +52,12 @@ def from_avro_abris_config(config_map):
         .andTopicNameStrategy("pmflow", False) \
         .usingSchemaRegistry(scala_map)
 
+def writeToCassandra(writeDF, epochID):
+    writeDF.write \
+           .mode("append") \
+           .partitionBy("district") \
+           .saveAsTable("cassandra.pmflow.aqi_by_district_date_time")
+
 if __name__ == "__main__":
     
     spark = create_spark_connection()
@@ -82,7 +88,7 @@ if __name__ == "__main__":
                              .withColumn("date", date_format("timestamp", "yyyy-MM-dd")) \
                              .withColumn("time", date_format("timestamp", "HH:mm:ss"))
     
-    averagePerDistrict = latestTable.groupBy("district").agg(avg("aqi").alias("aqi"), last("time").alias("time"))
+    averagePerDistrict = latestTable.groupBy("district").agg(avg("aqi").alias("aqi"), last("time").alias("time"), last("date").alias("date"))
 
    
     # query = latestTable \
@@ -90,8 +96,14 @@ if __name__ == "__main__":
     #         .outputMode("complete") \
     #         .format("console") \
     #         .start()
-    spark.read.table("cass100.pmflow.aqi_by_district_date_time").show()
     
-    # query.awaitTermination()
+    # sent = averagePerDistrict.select("district", "date", "time", "aqi") \
+    #                          .writeStream \
+    #                          .outputMode("update") \
+    #                          .foreachBatch(writeToCassandra) \
+    #                          .start()
+                      
+    # sent.awaitTermination()
 
+    spark.read.table("cassandra.pmflow.aqi_by_district_date_time").show()
     

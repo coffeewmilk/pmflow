@@ -18,7 +18,7 @@ def create_spark_connection():
             .config('spark.jars.repositories','https://repo1.maven.org/maven2') \
             .config('spark.sql.streaming.statefulOperator.checkCorrectness.enabled', 'false') \
             .config('spark.sql.extensions', 'com.datastax.spark.connector.CassandraSparkExtensions') \
-            .config('spark.jars', 'jars/spark-cassandra-connector-assembly-3.4.1-4-g05ca11a5.jar') \
+            .config('spark.jars', './spark/jars/spark-cassandra-connector-assembly-3.4.1-4-g05ca11a5.jar') \
             .config('spark.sql.catalog.cassandra', 'com.datastax.spark.connector.datasource.CassandraCatalog') \
             .config('spark.sql.catalog.cassandra.spark.cassandra.connection.host', 'cassandra') \
             .getOrCreate()
@@ -97,13 +97,13 @@ if __name__ == "__main__":
     #         .format("console") \
     #         .start()
     
-    # sent = averagePerDistrict.select("district", "date", "time", "aqi") \
-    #                          .writeStream \
-    #                          .outputMode("update") \
-    #                          .foreachBatch(writeToCassandra) \
-    #                          .start()
+    sent = averagePerDistrict.select("district", "date", "time", "aqi") \
+                             .writeStream \
+                             .outputMode("update") \
+                             .foreachBatch(writeToCassandra) \
+                             .start()
                       
-    # sent.awaitTermination()
+    sent.awaitTermination()
 
-    spark.read.table("cassandra.pmflow.aqi_by_district_date_time").show()
+    # spark.read.table("cassandra.pmflow.aqi_by_district_date_time").show()
     

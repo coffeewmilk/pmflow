@@ -14,14 +14,22 @@ from pyspark.sql.column import Column, _to_java_column
 def create_spark_connection():
     spark = None
     try:
+        # this config will only be used when running the code with python
         spark = SparkSession \
             .builder \
-            .appName("Ingestion").getOrCreate()
-            # .config('spark.jars.packages',
-            #     'org.apache.sedona:sedona-spark-3.0_2.12:1.5.1,'
-            #     'org.datasyslab:geotools-wrapper:1.5.1-28.2,'
-            #     'org.apache.spark:spark-avro_2.12:3.5.0') \
-            # .config('spark.jars.repositories', 'https://artifacts.unidata.ucar.edu/repository/unidata-all') \
+            .appName("Ingestion") \
+            .config('spark.jars.packages',
+                'org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0,'
+                'org.apache.spark:spark-avro_2.12:3.5.0,'
+                'org.apache.sedona:sedona-spark-shaded-3.5_2.12:1.5.1,'
+                'org.datasyslab:geotools-wrapper:1.5.1-28.2,'
+                'edu.ucar:cdm-core:5.4.2,'
+                'za.co.absa:abris_2.12:6.4.0') \
+            .config('spark.jars.repositories',
+                     'https://artifacts.unidata.ucar.edu/content/repositories/unidata-releases,'
+                     'https://repo1.maven.org/maven2,'
+                     'https://packages.confluent.io/maven') \
+            .getOrCreate()
             
         # bypass spark with sedona
         sedona = SedonaContext.create(spark)

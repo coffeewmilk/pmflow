@@ -145,7 +145,6 @@ def transform_avro_format(df):
                          col("lat").alias("lat"),
                          col("lon").alias("lon"),
                          col("time").alias("time"))).select("value")
-    avroFormat.printSchema()
     return avroFormat
 
 if __name__ == '__main__':

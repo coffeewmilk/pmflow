@@ -16,17 +16,13 @@ async function connectToCassandra() {
     }
   }
     
-
 connectToCassandra()
-
 
 export async function GET(
     request: Request,
     { params }: { params: { data: string } }
   ) {
-    const data = params.data // 'a', 'b', or 'c'
-    client.execute('SELECT * FROM aqi_by_district_date_time').then(
-        (r) => {console.log(r);
-        return Response.json({status: 'ok'})
-        })
+    const data = params.data // reserve for different path
+    const value =  await client.execute('SELECT * FROM aqi_by_district_date_time')
+    return Response.json(value)
   }

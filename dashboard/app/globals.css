@@ -18,16 +18,28 @@
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+  background: white;
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
+}
+
+.dashboard-bg {
+  background-color: #D9D9D9;
+}
+
+.header-bg {
+  background-color: #00263B;
+}
+
+.value-row-bg {
+  background-color: #007893;
+}
+
+.dashboard-size {
+  height: 500px;
+  width: 70%;
 }

@@ -23,6 +23,6 @@ export async function GET(
     { params }: { params: { data: string } }
   ) {
     const data = params.data // reserve for different path
-    const value =  await client.execute('SELECT * FROM aqi_by_district_date_time')
+    const value =  await client.execute('SELECT * FROM aqi_by_district_date_time GROUP BY district')
     return Response.json(value)
   }

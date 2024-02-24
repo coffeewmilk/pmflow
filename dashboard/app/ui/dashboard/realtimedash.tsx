@@ -1,23 +1,32 @@
+'use client'
+
+import useSWR, { Fetcher } from 'swr'
+import React from "react"
+import MapChart from '@/app/ui/dashboard/mapchart'
+import RealTimeRows from '@/app/ui/dashboard/realtimerows'
+
+const fetcher = (request: string) => fetch(`/api/data/${request}`).then(res => res.json()) // specify type later?
 
 export default function RealtimeDash() {
+    
+    const { data, error } = useSWR('AverageByDistrict', fetcher)
+    console.log(data)
+    
     return (
         <>
-        <div className="my-auto w-2/3">
-                this is graph
+        <div className="flex my-auto w-2/3 h-full">
+            <div className='w-2/3 m-auto'>
+                <MapChart/>
             </div>
-            <div className="flex flex-col h-full w-1/3 value-row-bg">
-                <div className="flex h-16 header-bg">
-                    <div className="my-auto"> header </div>
-                </div>
-                <div className="flex flex-col flex-nowrap space-y-4 overflow-y-auto">
-                    <div className="flex h-10"> 
-                        <p className="my-auto mx-2 w-3/5"> ThisStation </p>
-                        <p className="my-auto w-1/5"> api </p>
-                        <p className="my-auto mx-2 w-2/5"> time </p>
-                    </div>
-
-                </div>
+        </div>
+        <div className="flex flex-col h-full w-1/3 value-row-bg">
+            <div className="flex h-16 header-bg">
+                <div className="my-auto"> header </div>
             </div>
+            <div className="flex flex-col flex-nowrap space-y-4 overflow-y-auto">
+                <RealTimeRows/>
+            </div>
+        </div>
         </>
     )
 }

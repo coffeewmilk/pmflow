@@ -48,14 +48,13 @@ curl -s --location \
 	  ],
 	"primaryKey":
 	  {
-	    "partitionKey": ["district"],
-	    "clusteringKey": ["date", "time"]
+	    "partitionKey": ["date","district"],
+	    "clusteringKey": ["time"]
 	  },
 	"tableOptions":
 	  {
 	    "defaultTimeToLive": 0,
 	    "clusteringExpression":
-	      [{ "column": "date", "order": "DESC" },
-           { "column": "time", "order": "DESC" }]
+	      [{ "column": "time", "order": "DESC" }]
 	  }
 }' $$ echo "Table created"

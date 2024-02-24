@@ -3,14 +3,14 @@
 import useSWR, { Fetcher } from 'swr'
 import React from "react"
 import MapChart from '@/app/ui/dashboard/mapchart'
-import RealTimeRows from '@/app/ui/dashboard/realtimerows'
+import RealTimeRowWrapper from '@/app/ui/dashboard/realtimerow'
 
 const fetcher = (request: string) => fetch(`/api/data/${request}`).then(res => res.json()) // specify type later?
 
 export default function RealtimeDash() {
     
     const { data, error } = useSWR('AverageByDistrict', fetcher)
-    console.log(data)
+    console.log(data.rows)
     
     return (
         <>
@@ -23,9 +23,7 @@ export default function RealtimeDash() {
             <div className="flex h-16 header-bg">
                 <div className="my-auto"> header </div>
             </div>
-            <div className="flex flex-col flex-nowrap space-y-4 overflow-y-auto">
-                <RealTimeRows/>
-            </div>
+            <RealTimeRowWrapper/>
         </div>
         </>
     )

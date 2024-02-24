@@ -55,7 +55,6 @@ def from_avro_abris_config(config_map):
 def writeToCassandra(writeDF, epochID):
     writeDF.write \
            .mode("append") \
-           .partitionBy("district") \
            .saveAsTable("cassandra.pmflow.aqi_by_district_date_time")
 
 if __name__ == "__main__":

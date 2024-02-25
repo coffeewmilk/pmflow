@@ -9,8 +9,9 @@ const fetcher = (request: string) => fetch(`/api/data/${request}`).then(res => r
 
 export default function RealtimeDash() {
     
-    const { data, error } = useSWR('AverageByDistrict', fetcher)
-    console.log(data.rows)
+    const { data, error } = useSWR('AverageByDistrict', fetcher, { refreshInterval: 1000 })
+    console.log(data)
+    console.log(Date.now())
     
     return (
         <>

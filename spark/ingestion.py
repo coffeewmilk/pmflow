@@ -77,7 +77,7 @@ def label_district_by_df(df, spark):
 def updated_row(dfOld, dfNew):
     columns = ['aqi', 'uid']
     intersectDf = dfOld.select(columns).intersect(dfNew.select(columns))
-    rowUpdated = dfOld.join(intersectDf, on='name', how='leftanti')
+    rowUpdated = dfOld.join(intersectDf, on='aqi', how='leftanti')
     return rowUpdated
 
 def create_schemamanager_config():

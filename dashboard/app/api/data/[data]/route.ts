@@ -23,6 +23,14 @@ export async function GET(
     { params }: { params: { data: string } }
   ) {
     const data = params.data // reserve for different path
-    const value =  await client.execute('SELECT * FROM aqi_by_district_date_time GROUP BY district')
+
+    const fullTime = new Date();
+    const utcDate = fullTime.getUTCDate();
+    const utcMonth = ("0"+(fullTime.getUTCMonth()+1)).slice(-2) //better to cast number first
+    const utcYear = fullTime.getUTCFullYear();
+
+    const dateString = `${utcYear}-${utcMonth}-${utcDate}`
+
+    const value =  await client.execute(`SELECT * FROM aqi_by_district_date_time WHERE date='${dateString}' GROUP BY district`)
     return Response.json(value)
   }

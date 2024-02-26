@@ -1,6 +1,6 @@
-host='cassandra'
+host='cassandra_rest'
 
-auth=$(curl -L -X POST "http://$host:8081/v1/auth" \
+auth=$(curl -L -X POST "http://cassandra:8081/v1/auth" \
   -H 'Content-Type: application/json' \
   --data-raw '{
     "username": "cassandra",
@@ -19,20 +19,42 @@ curl -s --location --request POST "http://$host:8082/v2/schemas/keyspaces" \
     "name": "pmflow"
 }' && echo "created keyspace"
 
-# create table
+
+# create UDT
+curl -s --location --request POST "http://$host:8082/v2/schemas/keyspaces/pmflow/types" \
+--header "X-Cassandra-Token: $AUTH_TOKEN" --header 'Content-Type: application/json' \
+--data '{"name" : "roughrecord", 
+		"fields": 
+			[
+				{
+				"name" : "district", 
+				"typeDefinition": "text"
+			 	},
+				{
+				"name" : "aqi", 
+				"typeDefinition": "float"
+				},
+				{
+				"name" : "time", 
+				"typeDefinition": "time"
+				},
+				{
+				"name" : "date", 
+				"typeDefinition": "date"
+				}
+
+			]}'
+
+#create table
 curl -s --location \
 --request POST "http://$host:8082/v2/schemas/keyspaces/pmflow/tables" \
 --header "X-Cassandra-Token: $AUTH_TOKEN" \
 --header "Content-Type: application/json" \
 --header "Accept: application/json" \
 --data '{
-	"name": "aqi_by_district_date_time",
+	"name": "average_per_district_by_date",
 	"columnDefinitions":
 	  [
-        {
-	      "name": "district",
-	      "typeDefinition": "text"
-	    },
         {
 	      "name": "date",
 	      "typeDefinition": "date"
@@ -42,13 +64,13 @@ curl -s --location \
 	      "typeDefinition": "time"
 	    },
         {
-	      "name": "aqi",
-	      "typeDefinition": "float"
+	      "name": "records",
+	      "typeDefinition": "frozen<set<roughrecord>>"
 	    }
 	  ],
 	"primaryKey":
 	  {
-	    "partitionKey": ["date","district"],
+	    "partitionKey": ["date"],
 	    "clusteringKey": ["time"]
 	  },
 	"tableOptions":

@@ -48,7 +48,8 @@ def fetch_data_from_aqin(spark):
     try:
         pmJSON = requests.get(f"https://api.waqi.info/v2/map/bounds?latlng={','.join(latlong1)},{','.join(latlong2)}&token={aqicnKey}").json()['data']
         df = spark.createDataFrame(pmJSON)
-        df.show()
+        # filter null
+        df = df.filter(df.aqi != '-')
         data = df.select('aqi','lat', 'lon', col('uid').cast('string'), col("station.name").alias('name'), col("station.time").alias('time'))
     except Exception as e:
         logging.error(f"Unable to retrive data from aqin due to {e}")

@@ -1,7 +1,7 @@
 import logging
 
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, to_timestamp, max as max_, last, avg, max_by, date_format, collect_set, struct
+from pyspark.sql.functions import col, to_timestamp, max as max_, last, avg, max_by, date_format, current_timestamp
 from pyspark.sql.column import Column, _to_java_column
 
 def create_spark_connection():
@@ -21,6 +21,8 @@ def create_spark_connection():
             .config('spark.jars', './spark/jars/spark-cassandra-connector-assembly-3.4.1-4-g05ca11a5.jar') \
             .config('spark.sql.catalog.cassandra', 'com.datastax.spark.connector.datasource.CassandraCatalog') \
             .config('spark.sql.catalog.cassandra.spark.cassandra.connection.host', 'cassandra') \
+            .config('spark.sql.catalog.cassandra.spark.cassandra.auth.username', 'cassandra') \
+            .config('spark.sql.catalog.cassandra.spark.cassandra.auth.password', 'cassandra') \
             .getOrCreate()
         logging.info("Spark connection created")
 
@@ -52,10 +54,31 @@ def from_avro_abris_config(config_map):
         .andTopicNameStrategy("pmflow", False) \
         .usingSchemaRegistry(scala_map)
 
+def apd_cassandra_format(df):
+    
+    ''' The function is for formatting average per district data '''
+
+    return df.selectExpr( "max(timestamp) as timestamp", "collect_set( struct(district, aqi, time, date)) as records")\
+             .withColumn("date", date_format("timestamp", "yyyy-MM-dd")) \
+             .withColumn("time", date_format("timestamp", "HH:mm:ss")) \
+             .drop("timestamp")
+
+
+def average_per_district(df):
+    return df.groupBy("district").agg(avg("aqi").alias("aqi"),
+                                      max_("timestamp").alias("timestamp"),
+                                      max_by("time","timestamp").alias("time"),
+                                      max_by("date","timestamp").alias("date"))
+
 def writeToCassandra(writeDF, epochID):
     writeDF.write \
            .mode("append") \
-           .saveAsTable("cassandra.pmflow.aqi_by_district_date_time")
+           .saveAsTable("cassandra.pmflow.average_per_district_by_date")
+
+def doTask(df, epochID):
+    # this will keep sending even if there is no update in data
+    formatted = apd_cassandra_format( average_per_district(df) )
+    writeToCassandra(formatted, epochID)
 
 if __name__ == "__main__":
     
@@ -71,8 +94,8 @@ if __name__ == "__main__":
     # to do: implement spark hdfs checkpoint!
    
 
-    explodedAvro = df.withWatermark("timestamp", "5 minutes").select(from_avro("value", from_avro_abris_settings).alias("value")).select("value.*")
-    convertTime = explodedAvro.withColumn("timestamp", to_timestamp(col("time")))
+    explodedAvro = df.select(from_avro("value", from_avro_abris_settings).alias("value")).select("value.*")
+    convertTime = explodedAvro.withColumn("timestamp", to_timestamp(col("time"))).withWatermark("timestamp", "1 day")
 
     # get the latest record for each station, assuming there will be no unorderly data
     # Work around is needed since the traditional join doesn't work on streaming data
@@ -87,35 +110,14 @@ if __name__ == "__main__":
                              .withColumn("date", date_format("timestamp", "yyyy-MM-dd")) \
                              .withColumn("time", date_format("timestamp", "HH:mm:ss"))
     
-    averagePerDistrict = latestTable.groupBy("district").agg(avg("aqi").alias("aqi"),
-                                                            max_("timestamp").alias("timestamp"),
-                                                            max_by("time","timestamp").alias("time"),
-                                                            max_by("date","timestamp").alias("date"))
-    
-
-    test = averagePerDistrict.selectExpr( "max(timestamp)", "collect_set( struct(district, aqi, time, date))")
+    # after this use foreachbatch instead
+    task = latestTable.writeStream \
+                      .outputMode("complete") \
+                      .foreachBatch(doTask) \
+                      .start()
 
    
-    query = averagePerDistrict \
-            .writeStream \
-            .outputMode("complete") \
-            .format("console") \
-            .start()
-    
-    query2 = test \
-            .writeStream \
-            .outputMode("complete") \
-            .format("console") \
-            .start()
-    
-    # sent = averagePerDistrict.select("district", "date", "time", "aqi") \
-    #                          .writeStream \
-    #                          .outputMode("update") \
-    #                          .foreachBatch(writeToCassandra) \
-    #                          .start()
+   
                       
-    query.awaitTermination()
-    query2.awaitTermination()
-
-    # spark.read.table("cassandra.pmflow.aqi_by_district_date_time").show()
+    task.awaitTermination()
     

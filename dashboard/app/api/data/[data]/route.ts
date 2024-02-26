@@ -3,7 +3,8 @@ import { Client } from "cassandra-driver";
 const client = new Client({
     contactPoints: ['localhost'],
     localDataCenter: 'datacenter1',
-    keyspace: 'pmflow'
+    keyspace: 'pmflow',
+    credentials: { username: 'cassandra', password: 'cassandra' }
 });
 
 async function connectToCassandra() {
@@ -31,6 +32,6 @@ export async function GET(
 
     const dateString = `${utcYear}-${utcMonth}-${utcDate}`
 
-    const value =  await client.execute(`SELECT * FROM aqi_by_district_date_time WHERE date='${dateString}' GROUP BY district`)
+    const value =  await client.execute(`SELECT * FROM average_per_district_by_date WHERE date='${dateString}' LIMIT 1`)
     return Response.json(value)
   }

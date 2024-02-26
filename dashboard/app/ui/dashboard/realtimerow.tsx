@@ -4,14 +4,20 @@ type averageByDistrict = {
     district: string;
     aqi: number;
     time: string;
+    date: string;
 }
 
 
 
-export default function RealTimeRowWrapper() {
+export default function RealTimeRowWrapper( {records}: {records:averageByDistrict[]}) {
     return (
         <div className="flex flex-col flex-nowrap space-y-4 overflow-y-auto">
-            <RealTimeRow name="thisstation" aqi={23} time="currenttime" />
+            {records.map(record => 
+                <RealTimeRow 
+                    key = {record.district}
+                    name={record.district} 
+                    aqi={record.aqi}
+                    time={record.time}/>)}
         </div>
     )
 }

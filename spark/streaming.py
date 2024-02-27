@@ -1,7 +1,7 @@
 import logging
 
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, to_timestamp, max as max_, last, avg, max_by, date_format, current_timestamp
+from pyspark.sql.functions import col, to_timestamp, max as max_, last, avg, max_by, date_format, round
 from pyspark.sql.column import Column, _to_java_column
 
 def create_spark_connection():
@@ -65,7 +65,7 @@ def apd_cassandra_format(df):
 
 
 def average_per_district(df):
-    return df.groupBy("district").agg(avg("aqi").alias("aqi"),
+    return df.groupBy("district").agg(round(avg("aqi")).alias("aqi"),
                                       max_("timestamp").alias("timestamp"),
                                       max_by("time","timestamp").alias("time"),
                                       max_by("date","timestamp").alias("date"))

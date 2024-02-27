@@ -1,0 +1,59 @@
+<project>
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.pmflow.ingestion</groupId>
+    <artifactId>ingestion</artifactId>
+    <version>1.0</version>
+
+    <dependencies>
+        <dependency>
+            <groupId>za.co.absa</groupId>
+            <artifactId>abris_2.12</artifactId>
+            <version>6.4.0</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/edu.ucar/cdm-core -->
+        <dependency>
+            <groupId>edu.ucar</groupId>
+            <artifactId>cdm-core</artifactId>
+            <version>5.4.2</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.datasyslab/geotools-wrapper -->
+        <dependency>
+            <groupId>org.datasyslab</groupId>
+            <artifactId>geotools-wrapper</artifactId>
+            <version>1.5.1-28.2</version>
+        </dependency>
+        <dependency>
+            <groupId>io.confluent</groupId>
+            <artifactId>kafka-schema-registry</artifactId>
+            <version>7.5.1</version>
+        </dependency>
+        <!-- https://mavenlibs.com/maven/dependency/org.apache.sedona/sedona-spark-shaded-3.5_2.12 -->
+        <dependency>
+            <groupId>org.apache.sedona</groupId>
+            <artifactId>sedona-spark-shaded-3.5_2.12</artifactId>
+            <version>1.5.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-avro_2.12</artifactId>
+            <version>3.5.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-sql-kafka-0-10_2.12</artifactId>
+            <version>3.5.0</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <repositories>
+        <repository>
+            <id>unidata-releases</id>
+            <url>https://artifacts.unidata.ucar.edu/content/repositories/unidata-releases/</url>
+        </repository>
+        <repository>
+            <id>confluent</id>
+            <url>https://packages.confluent.io/maven/</url>
+        </repository>
+    </repositories>
+</project>

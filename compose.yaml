@@ -52,8 +52,8 @@ services:
     depends_on:
       - broker
     volumes:
-      - $PWD/credentials:/root/.aws/credentials
-      - $PWD/connectors:/connectors
+      - ./credentials:/root/.aws/credentials
+      - ./connectors:/connectors
     environment:
         CONNECT_BOOTSTRAP_SERVERS: 'broker:9092'
         CONNECT_REST_PORT: 8083
@@ -83,7 +83,7 @@ services:
     ports:
       - "8081:8081"
     volumes:
-      - $PWD/avro:/avro
+      - ./avro:/avro
     environment:
         SCHEMA_REGISTRY_HOST_NAME: schema-registry
         SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'broker:9092'
@@ -98,9 +98,9 @@ services:
       - schema-registry
       - connector
     volumes:
-      - $PWD/avro:/scripts/avro
-      - $PWD/connectors:/scripts/connectors
-      - $PWD/hadoop:/scripts/hadoop
+      - ./avro:/scripts/avro
+      - ./connectors:/scripts/connectors
+      - ./hadoop:/scripts/hadoop
       - ./cassandra:/scripts/cassandra
     command:
       - sh 
@@ -127,9 +127,9 @@ services:
       - broker
       - alpine
     volumes:
-      - $PWD/requirements.txt:/usr/src/app/requirements.txt
-      - $PWD/spark:/usr/src/app/spark
-      - $PWD/avro:/usr/src/app/avro
+      - ./requirements.txt:/usr/src/app/requirements.txt
+      - ./spark:/usr/src/app/spark
+      - ./avro:/usr/src/app/avro
     command: 
       - bash 
       - -c 

@@ -71,6 +71,7 @@ def average_per_district(df):
                                       max_by("date","timestamp").alias("date"))
 
 def writeToCassandra(writeDF, epochID):
+    writeDF.show()
     writeDF.write \
            .mode("append") \
            .saveAsTable("cassandra.pmflow.average_per_district_by_date")

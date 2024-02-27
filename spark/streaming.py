@@ -71,15 +71,15 @@ def average_per_district(df):
                                       max_by("date","timestamp").alias("date"))
 
 def writeToCassandra(writeDF, epochID):
-    if writeDF.count() > 0:
-        writeDF.write \
-            .mode("append") \
-            .saveAsTable("cassandra.pmflow.average_per_district_by_date")
+    writeDF.write \
+           .mode("append") \
+           .saveAsTable("cassandra.pmflow.average_per_district_by_date")
 
 def doTask(df, epochID):
     # this will keep sending even if there is no update in data
-    formatted = apd_cassandra_format( average_per_district(df) )
-    writeToCassandra(formatted, epochID)
+    if df.count() > 1:
+        formatted = apd_cassandra_format( average_per_district(df) )
+        writeToCassandra(formatted, epochID)
 
 if __name__ == "__main__":
     

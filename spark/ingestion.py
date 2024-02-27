@@ -76,6 +76,7 @@ def label_district_by_df(df, spark):
 
 
 def updated_row(dfOld, dfNew):
+    if dfOld == None: return None
     columns = ['aqi', 'uid']
     intersectDf = dfOld.select(columns).intersect(dfNew.select(columns))
     rowUpdated = dfOld.join(intersectDf, on='aqi', how='leftanti')
@@ -152,12 +153,23 @@ if __name__ == '__main__':
 
     spark = create_spark_connection()
     create_district_view(spark)
+    to_avro_abris_settings = to_avro_abris_config({'schema.registry.url': 'http://schema-registry:8081'})
+    
+    initialValue = fetch_data_from_aqin(spark)
+    initialLabel = label_district_by_df(initialValue,spark)
+    initialDf = transform_avro_format(initialLabel)
+    send_df_to_kafka(initialDf, to_avro_abris_settings)
 
     while True:
         time.sleep(1)
         data = fetch_data_from_aqin(spark)
-        labelData = label_district_by_df(data, spark)
-        transformed = transform_avro_format(labelData)
+        updatedData = updated_row(initialValue, data)
+        initialValue = data
+
+        if updatedData == None: continue
+        if updatedData.count() > 0 :
+            labelData = label_district_by_df(updatedData, spark)
+            transformed = transform_avro_format(labelData)
+            send_df_to_kafka(transformed, to_avro_abris_settings)
+
         
-        to_avro_abris_settings = to_avro_abris_config({'schema.registry.url': 'http://schema-registry:8081'})
-        send_df_to_kafka(transformed, to_avro_abris_settings)

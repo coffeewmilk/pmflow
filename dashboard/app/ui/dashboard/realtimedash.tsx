@@ -9,7 +9,8 @@ const fetcher = (request: string) => fetch(`/api/data/${request}`).then(res => r
 
 export default function RealtimeDash() {
     
-    const { data, error } = useSWR('AverageByDistrict', fetcher, { refreshInterval: 1000 })
+    // const { data, error } = useSWR('AverageByDistrict', fetcher, { refreshInterval: 1000 })
+    const data = {rows: [{time : 'time', records: [{district : 'Pathum Wan', aqi : 90, time : 'time', date : 'date'}]}]}
     
     if (data) { console.log(data) }
     if (!data) return <div>Loading...</div> 
@@ -18,7 +19,7 @@ export default function RealtimeDash() {
         <>
         <div className="flex my-auto w-2/3 h-full">
             <div className='w-2/3 m-auto'>
-                <MapChart/>
+                <MapChart records={data.rows[0].records}/>
             </div>
         </div>
         <div className="flex flex-col h-full w-1/3 value-row-bg">

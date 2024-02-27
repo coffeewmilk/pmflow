@@ -7,8 +7,6 @@ type averageByDistrict = {
     date: string;
 }
 
-
-
 export default function RealTimeRowWrapper( {records}: {records:averageByDistrict[]}) {
     return (
         <div className="flex flex-col flex-nowrap space-y-4 overflow-y-auto">

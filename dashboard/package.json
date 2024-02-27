@@ -9,8 +9,10 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@types/d3": "^7.4.3",
     "@types/react-simple-maps": "^3.0.4",
     "cassandra-driver": "^4.7.2",
+    "d3": "^7.8.5",
     "next": "14.1.0",
     "react": "^18",
     "react-dom": "^18",

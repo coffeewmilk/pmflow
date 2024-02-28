@@ -96,7 +96,7 @@ if __name__ == "__main__":
    
 
     explodedAvro = df.select(from_avro("value", from_avro_abris_settings).alias("value")).select("value.*")
-    convertTime = explodedAvro.withColumn("timestamp", to_timestamp(col("time"))).withWatermark("timestamp", "1 day")
+    convertTime = explodedAvro.withColumn("timestamp", to_timestamp(col("time")))
 
     # get the latest record for each station, assuming there will be no unorderly data
     # Work around is needed since the traditional join doesn't work on streaming data

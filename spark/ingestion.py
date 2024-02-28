@@ -7,7 +7,9 @@ import logging
 
 from pyspark.sql import SparkSession
 from sedona.spark import *
-from pyspark.sql.functions import col, struct
+from sedona.sql.st_predicates import ST_Contains
+from sedona.sql.st_constructors import ST_MakePoint
+from pyspark.sql.functions import col, struct, isnull, coalesce
 from pyspark.sql.column import Column, _to_java_column
 #from pyspark.sql.avro.functions import from_avro, to_avro
 
@@ -55,21 +57,40 @@ def fetch_data_from_aqin(spark):
         logging.error(f"Unable to retrive data from aqin due to {e}")
     return data
 
-def create_district_view(spark):
+def read_district_shape():
+    district_map = None
     try:
         path = os.path.realpath(os.path.dirname(__file__))
         shape_file_location=f'{path}/data/Bangkok Metropolitan Region'
         districtRDD = ShapefileReader.readToGeometryRDD(spark, shape_file_location)
-        Adapter.toDf(districtRDD, spark).select('geometry', 'ADM2_EN').createOrReplaceTempView("district_map")
+        # Adapter.toDf(districtRDD, spark).select('geometry', 'ADM2_EN').createOrReplaceTempView("district_map")
+        district_map = Adapter.toDf(districtRDD, spark).select('geometry', col('ADM2_EN').alias('district'))
         logging.info("Successfully created map view")
     except Exception as e:
         logging.error(f"Unable to create map view due to {e}")
 
-def label_district_by_df(df, spark):
+    return district_map
+
+def label_district_by_df(df):
+    # implement a df as lookup table?
+    global districtLookup
     labeled = None
     try:
-        df.createOrReplaceTempView("temp")
-        labeled = spark.sql("SELECT * FROM temp t INNER JOIN district_map d ON ST_Contains(d.geometry, ST_MakePoint(t.lon, t.lat))")
+        #df.createOrReplaceTempView("temp")
+        #labeled = spark.sql("SELECT * FROM temp t INNER JOIN district_map d ON ST_Contains(d.geometry, ST_MakePoint(t.lon, t.lat))")
+        # first find it in lookup table
+        labeled = df.join(districtLookup, (df.lat == districtLookup.lat) & (df.lon == districtLookup.lon), 'full') \
+                    .drop(districtLookup.lat, districtLookup.lon) \
+                    .withColumnRenamed('district', 'pre_district')
+        # lable the remaining with shapefile
+        labeled = labeled.filter(isnull(labeled.pre_district)) \
+                         .join(district_map, ST_Contains(district_map.geometry, ST_MakePoint(df.lon, df.lat))) \
+                         .withColumn('district', coalesce(labeled.pre_district, district_map.district)) \
+                         .drop(district_map.district, labeled.pre_district, district_map.geometry)
+        # add district that is not in lookup table
+        districtLookup = labeled.select('lat', 'lon', 'district').union(districtLookup)
+
+        labeled.show()
     except Exception as e:
         logging.error(f"Unable to label district due to {e}")
     return labeled
@@ -143,7 +164,7 @@ def transform_avro_format(df):
                          col("aqi").alias("aqi"),
                          col("uid").alias("uid"),
                          col("name").alias("name"),
-                         col("ADM2_EN").alias("district"),
+                         col("district").alias("district"),
                          col("lat").alias("lat"),
                          col("lon").alias("lon"),
                          col("time").alias("time"))).select("value")
@@ -152,11 +173,12 @@ def transform_avro_format(df):
 if __name__ == '__main__':
 
     spark = create_spark_connection()
-    create_district_view(spark)
+    districtLookup = spark.createDataFrame([], "lat: double, lon: double, district: string")
+    district_map = read_district_shape()
     to_avro_abris_settings = to_avro_abris_config({'schema.registry.url': 'http://schema-registry:8081'})
     
     initialValue = fetch_data_from_aqin(spark)
-    initialLabel = label_district_by_df(initialValue,spark)
+    initialLabel = label_district_by_df(initialValue)
     initialDf = transform_avro_format(initialLabel)
     send_df_to_kafka(initialDf, to_avro_abris_settings)
 
@@ -168,7 +190,7 @@ if __name__ == '__main__':
 
         if updatedData == None: continue
         if updatedData.count() > 0 :
-            labelData = label_district_by_df(updatedData, spark)
+            labelData = label_district_by_df(updatedData)
             transformed = transform_avro_format(labelData)
             send_df_to_kafka(transformed, to_avro_abris_settings)
 

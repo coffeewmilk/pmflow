@@ -26,8 +26,8 @@ export async function GET(
     const data = params.data // reserve for different path
 
     const fullTime = new Date();
-    const utcDate = fullTime.getUTCDate();
-    const utcMonth = ("0"+(fullTime.getUTCMonth()+1)).slice(-2) //better to cast number first
+    const utcDate = ("0"+(fullTime.getUTCDate()+1)).slice(-2);
+    const utcMonth = ("0"+(fullTime.getUTCMonth()+1)).slice(-2); //better to cast number first
     const utcYear = fullTime.getUTCFullYear();
 
     const dateString = `${utcYear}-${utcMonth}-${utcDate}`

@@ -9,7 +9,7 @@ from pyspark.sql import SparkSession
 from sedona.spark import *
 from sedona.sql.st_predicates import ST_Contains
 from sedona.sql.st_constructors import ST_MakePoint
-from pyspark.sql.functions import col, struct, isnull, coalesce
+from pyspark.sql.functions import col, struct, isnull, coalesce, to_timestamp
 from pyspark.sql.column import Column, _to_java_column
 #from pyspark.sql.avro.functions import from_avro, to_avro
 
@@ -41,21 +41,6 @@ def create_spark_connection():
     
     return sedona
 
-
-def fetch_data_from_aqin(spark):
-    aqicnKey = '[aqicnKey]' # to be filled
-    latlong1 = ['13.898819', '100.415717']
-    latlong2 = ['13.579757', '100.683936']
-    data = None
-    try:
-        pmJSON = requests.get(f"https://api.waqi.info/v2/map/bounds?latlng={','.join(latlong1)},{','.join(latlong2)}&token={aqicnKey}").json()['data']
-        df = spark.createDataFrame(pmJSON)
-        # filter null
-        df = df.filter(df.aqi != '-')
-        data = df.select('aqi','lat', 'lon', col('uid').cast('string'), col("station.name").alias('name'), col("station.time").alias('time'))
-    except Exception as e:
-        logging.error(f"Unable to retrive data from aqin due to {e}")
-    return data
 
 def read_district_shape():
     district_map = None
@@ -173,7 +158,6 @@ def doTask(df, epochID):
 
 
 
-
 if __name__ == '__main__':
 
     spark = create_spark_connection()
@@ -188,28 +172,17 @@ if __name__ == '__main__':
             .option("key", "[aqicnKey]") \
             .load()
     
-    task = input.writeStream \
-                    .outputMode("update") \
-                    .foreachBatch(doTask) \
-                    .start()
+    deduplicated = input.withColumn("timestamp", to_timestamp(col("time"))) \
+                        .withWatermark("timestamp", "2 hours") \
+                        .dropDuplicates(["uid", "timestamp"])
+    
+    task = deduplicated.writeStream \
+                       .outputMode("update") \
+                       .foreachBatch(doTask) \
+                       .start()
     
     task.awaitTermination()
     
-    # initialValue = fetch_data_from_aqin(spark)
-    # initialLabel = label_district_by_df(initialValue)
-    # initialDf = transform_avro_format(initialLabel)
-    # send_df_to_kafka(initialDf, to_avro_abris_settings)
-
-    # while True:
-    #     time.sleep(1)
-    #     data = fetch_data_from_aqin(spark)
-    #     updatedData = updated_row(initialValue, data)
-    #     initialValue = data
-
-    #     if updatedData == None: continue
-    #     if updatedData.count() > 0 :
-    #         labelData = label_district_by_df(updatedData)
-    #         transformed = transform_avro_format(labelData)
-    #         send_df_to_kafka(transformed, to_avro_abris_settings)
+    
 
         

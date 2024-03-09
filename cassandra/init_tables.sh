@@ -79,4 +79,81 @@ curl -s --location \
 	    "clusteringExpression":
 	      [{ "column": "time", "order": "DESC" }]
 	  }
-}' $$ echo "Table created"
+}' 
+
+#create table
+curl -s --location \
+--request POST "http://$host:8082/v2/schemas/keyspaces/pmflow/tables" \
+--header "X-Cassandra-Token: $AUTH_TOKEN" \
+--header "Content-Type: application/json" \
+--header "Accept: application/json" \
+--data '{
+	"name": "average_per_district_by_date_district",
+	"columnDefinitions":
+	  [
+		{
+	      "name": "district",
+	      "typeDefinition": "text"
+	    },
+        {
+	      "name": "date",
+	      "typeDefinition": "date"
+	    },
+        {
+	      "name": "time",
+	      "typeDefinition": "time"
+	    },
+        {
+	      "name": "aqi",
+	      "typeDefinition": "int"
+	    }
+	  ],
+	"primaryKey":
+	  {
+	    "partitionKey": ["date", "district"],
+	    "clusteringKey": ["time"]
+	  },
+	"tableOptions":
+	  {
+	    "defaultTimeToLive": 0,
+	    "clusteringExpression":
+	      [{ "column": "time", "order": "DESC" }]
+	  }
+}' 
+
+
+#create table
+curl -s --location \
+--request POST "http://$host:8082/v2/schemas/keyspaces/pmflow/tables" \
+--header "X-Cassandra-Token: $AUTH_TOKEN" \
+--header "Content-Type: application/json" \
+--header "Accept: application/json" \
+--data '{
+	"name": "available_districts_by_day",
+	"columnDefinitions":
+	  [
+		{
+	      "name": "districts",
+	      "typeDefinition": "set<text>"
+	    },
+        {
+	      "name": "date",
+	      "typeDefinition": "date"
+	    },
+        {
+	      "name": "time",
+	      "typeDefinition": "time"
+	    }
+	  ],
+	"primaryKey":
+	  {
+	    "partitionKey": ["date"],
+	    "clusteringKey": ["time"]
+	  },
+	"tableOptions":
+	  {
+	    "defaultTimeToLive": 0,
+	    "clusteringExpression":
+	      [{ "column": "time", "order": "DESC" }]
+	  }
+}' 

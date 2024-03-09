@@ -9,7 +9,7 @@ const fetcher = (request: string) => fetch(`/api/data/${request}`).then(res => r
 
 export default function RealtimeDash() {
     
-    const { data, error } = useSWR('AverageByDistrict', fetcher, { refreshInterval: 1000 })
+    const { data, error } = useSWR('AveragesPertime', fetcher, { refreshInterval: 1000 })
     // const data = {rows: [{time : 'time', records: [{district : 'Pathum Wan', aqi : 90, time : 'time', date : 'date'}]}]}
     
     if (data) { console.log(data) }

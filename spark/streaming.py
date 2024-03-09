@@ -14,11 +14,10 @@ def create_spark_connection():
                     'org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0,'
                     'za.co.absa:abris_2.12:6.4.0,'
                     'org.apache.spark:spark-avro_2.12:3.5.0,'
-                    '') \
-            .config('spark.jars.repositories','https://repo1.maven.org/maven2') \
+                    'com.datastax.spark:spark-cassandra-connector_2.12:3.5.0') \
+            .config('spark.jars.repositories','https://repo1.maven.org/maven2,https://repo1.maven.org/maven2/') \
             .config('spark.sql.streaming.statefulOperator.checkCorrectness.enabled', 'false') \
             .config('spark.sql.extensions', 'com.datastax.spark.connector.CassandraSparkExtensions') \
-            .config('spark.jars', './spark/jars/spark-cassandra-connector-assembly-3.4.1-4-g05ca11a5.jar') \
             .config('spark.sql.catalog.cassandra', 'com.datastax.spark.connector.datasource.CassandraCatalog') \
             .config('spark.sql.catalog.cassandra.spark.cassandra.connection.host', 'cassandra') \
             .config('spark.sql.catalog.cassandra.spark.cassandra.auth.username', 'cassandra') \
@@ -54,9 +53,9 @@ def from_avro_abris_config(config_map):
         .andTopicNameStrategy("pmflow", False) \
         .usingSchemaRegistry(scala_map)
 
-def apd_cassandra_format(df):
+def apdpt_cassandra_format(df):
     
-    ''' The function is for formatting average per district data '''
+    ''' The function is for formatting average per district data by per time '''
 
     return df.selectExpr( "max(timestamp) as timestamp", "collect_set( struct(district, aqi, time, date)) as records")\
              .withColumn("date", date_format("timestamp", "yyyy-MM-dd")) \
@@ -70,16 +69,18 @@ def average_per_district(df):
                                       max_by("time","timestamp").alias("time"),
                                       max_by("date","timestamp").alias("date"))
 
-def writeToCassandra(writeDF, epochID):
+def writeToCassandra(writeDF, table):
     writeDF.write \
            .mode("append") \
-           .saveAsTable("cassandra.pmflow.average_per_district_by_date")
+           .saveAsTable(f"cassandra.pmflow.{table}")
 
 def doTask(df, epochID):
-    # this will keep sending even if there is no update in data
+    print(f"Current streaming row count: {df.count()}")
     if df.count() > 1:
-        formatted = apd_cassandra_format( average_per_district(df) )
-        writeToCassandra(formatted, epochID)
+        averagePerDistrict = average_per_district(df).cache()
+        formatted = apdpt_cassandra_format( averagePerDistrict )
+        writeToCassandra(formatted, "average_per_district_by_date")
+        writeToCassandra(averagePerDistrict.drop("timestamp"), "average_per_district_by_date_district")
 
 if __name__ == "__main__":
     
@@ -101,6 +102,7 @@ if __name__ == "__main__":
     # get the latest record for each station, assuming there will be no unorderly data
     # Work around is needed since the traditional join doesn't work on streaming data
     # use max_by for spark 3.0+
+    
     latestTable = convertTime.groupBy("uid").agg(max_("timestamp"), 
                                                  max_by("district", "timestamp"), 
                                                  max_by("name", "timestamp"), 
@@ -117,7 +119,5 @@ if __name__ == "__main__":
                       .foreachBatch(doTask) \
                       .start()
 
-   
-   
                       
     task.awaitTermination()

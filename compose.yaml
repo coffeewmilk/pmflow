@@ -188,7 +188,21 @@ services:
       - QUARKUS_LOG_LEVEL=INFO
 
   
-
+  sparkbatch:
+    image: bitnami/spark:3.5.0
+    container_name: sparkbatch
+    working_dir: /usr/src/app
+    user: root
+    volumes:
+      - ./requirements.txt:/usr/src/app/requirements.txt
+      - ./spark:/usr/src/app/spark
+    command: 
+      - bash 
+      - -c 
+      - |
+        apt-get update && apt-get -y install cron && apt install -y openjdk-17-jdk
+        pip install --no-cache-dir -r requirements.txt
+        bash ./spark/start_batch.sh
 
 
   

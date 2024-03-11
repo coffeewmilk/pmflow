@@ -1,0 +1,6 @@
+#!/bin/bash
+
+echo "Start Batch"
+
+/opt/bitnami/spark/bin/spark-submit --properties-file /usr/src/app/spark/conf/spark-batch.conf \
+             /usr/src/app/spark/batch.py 2>&1 | sed 's/^/| BATCH | /g'

@@ -1,0 +1,10 @@
+SHELL=/bin/bash
+BASH_ENV=/container.env
+
+
+* */4 * * * /usr/src/app/spark/batch_submit >> /var/log/cron.log
+
+
+
+
+

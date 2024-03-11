@@ -122,19 +122,40 @@ curl -s --location \
 }' 
 
 
-#create table
+# create UDT
+curl -s --location --request POST "http://$host:8082/v2/schemas/keyspaces/pmflow/types" \
+--header "X-Cassandra-Token: $AUTH_TOKEN" --header 'Content-Type: application/json' \
+--data '{"name" : "stationdetails", 
+		"fields": 
+			[
+				{
+				"name" : "station", 
+				"typeDefinition": "text"
+			 	},
+				{
+				"name" : "maxAqi", 
+				"typeDefinition": "int"
+				},
+				{
+				"name" : "timesUpdate", 
+				"typeDefinition": "int"
+				}
+
+			]}'
+
+# create Table
 curl -s --location \
 --request POST "http://$host:8082/v2/schemas/keyspaces/pmflow/tables" \
 --header "X-Cassandra-Token: $AUTH_TOKEN" \
 --header "Content-Type: application/json" \
 --header "Accept: application/json" \
 --data '{
-	"name": "available_districts_by_day",
+	"name": "stations_details_by_date_district",
 	"columnDefinitions":
 	  [
 		{
-	      "name": "districts",
-	      "typeDefinition": "set<text>"
+	      "name": "district",
+	      "typeDefinition": "text"
 	    },
         {
 	      "name": "date",
@@ -143,11 +164,15 @@ curl -s --location \
         {
 	      "name": "time",
 	      "typeDefinition": "time"
+	    },
+        {
+	      "name": "stations",
+	      "typeDefinition": "frozen<set<stationdetails>>"
 	    }
 	  ],
 	"primaryKey":
 	  {
-	    "partitionKey": ["date"],
+	    "partitionKey": ["date", "district"],
 	    "clusteringKey": ["time"]
 	  },
 	"tableOptions":

@@ -8,15 +8,25 @@ type stationdetails = {
 
 export default function StationRowWrapper ( {stations} : {stations : stationdetails[]}) {
     return (
-        <div className="flex flex-col flex-nowrap w-full space-y-4 overflow-y-auto">
-            {stations.map(station =>
-                <StationRow
-                    key = {station.station}
-                    name = {station.station}
-                    maxAqi={station.maxAqi}
-                    timesupdate={station.timesUpdate}/>)
-            }
-        </div>
+        <table className="w-full">
+            <thead>
+                <tr className="h-16">
+                    <th>Station</th>
+                    <th className="text-right p-2 w-1/5">max aqi</th>
+                    <th className="text-right p-2 w-1/5">times updated</th>
+                </tr>
+            </thead>
+            <tbody>
+                {stations.map(station =>
+                    (<tr className="h-16" key = {station.station}>
+                        <td className="p-2">{station.station}</td>
+                        <td className="text-right p-2">{station.maxAqi}</td>
+                        <td className="text-right p-2">{station.timesUpdate}</td>
+                    </tr>))
+                }
+                <tr></tr>
+            </tbody>
+        </table>
     )
 }
 

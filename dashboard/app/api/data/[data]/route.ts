@@ -2,7 +2,7 @@ import { Client } from "cassandra-driver";
 import { type NextRequest } from 'next/server'
 // host.docker.internal
 const client = new Client({
-    contactPoints: ['localhost'],
+    contactPoints: ['host.docker.internal'],
     localDataCenter: 'datacenter1',
     keyspace: 'pmflow',
     credentials: { username: 'cassandra', password: 'cassandra' }

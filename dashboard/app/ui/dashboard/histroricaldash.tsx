@@ -39,7 +39,7 @@ export default function HistroricalDash () {
                     <HistroricalDataWrapper selectedOption={selectedOption}/>
                 </div> 
             </div>
-            <div className='flex dashboard-single-height dashboard-bg mt-10'>
+            <div className='flex dashboard-single-height value-row-bg mt-10'>
                 <StationDataWrapper selectedOption={selectedOption}/>
             </div>
         </>

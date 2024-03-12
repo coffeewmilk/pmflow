@@ -44,4 +44,12 @@ export async function GET(
       const value = await client.execute(query, [ district ])
       return Response.json(value)
     }
+    if (data == "StationDetails") {
+      const searchParams = request.nextUrl.searchParams
+      const district = searchParams.get('district')
+      const query = `SELECT * FROM stations_details_by_date_district WHERE date='${dateString}' AND district=? LIMIT 1`
+      const value = await client.execute(query, [ district ])
+      return Response.json(value)
+    }
+    else { return Response.json({ error: 'Path not found' }, { status: 404 })}
   }

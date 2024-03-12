@@ -43,3 +43,12 @@ body {
   height: 500px;
   width: 70%;
 }
+
+.dashboard-double-row {
+  height: 1200px;
+  width: 70%;
+}
+
+.dashboard-single-height {
+  height: 500px;
+}

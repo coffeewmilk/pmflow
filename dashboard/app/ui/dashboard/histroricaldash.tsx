@@ -4,6 +4,7 @@ import useSWR, { Fetcher } from 'swr'
 import {useState, useEffect} from "react"
 import HistroricalDropdown from './histroricaldropdown'
 import HistroricalDataWrapper from './histroricaldatawrapper'
+import StationDataWrapper from './stationdatawrapper'
 
 type averageByDistrict = {
     district: string;
@@ -28,15 +29,19 @@ export default function HistroricalDash () {
             setOptions(fetchedOptions)}
     }, [data]);
     if (!data) return <div>Loading...</div>
-    console.log(selectedOption)
-    console.log(options) 
-    //return (<div> hey </div>)
+    // console.log(selectedOption)
+    // console.log(options) 
     return (
-        <div className='flex flex-col h-full'> 
-            <HistroricalDropdown options={options} selectedOption={selectedOption} setSelectedOption = {setSelectedOption}/>
-            <div className='flex h-full'>
-                <HistroricalDataWrapper selectedOption={selectedOption}/>
-            </div> 
-        </div>
+        <>
+            <div className='flex flex-col dashboard-single-height dashboard-bg'> 
+                <HistroricalDropdown options={options} selectedOption={selectedOption} setSelectedOption = {setSelectedOption}/>
+                <div className='flex h-full'>
+                    <HistroricalDataWrapper selectedOption={selectedOption}/>
+                </div> 
+            </div>
+            <div className='flex dashboard-single-height dashboard-bg mt-10'>
+                <StationDataWrapper selectedOption={selectedOption}/>
+            </div>
+        </>
     ) 
 }

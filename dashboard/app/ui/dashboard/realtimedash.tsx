@@ -16,7 +16,7 @@ export default function RealtimeDash() {
     if (!data) return <div>Loading...</div> 
     
     return (
-        <>
+        <div className='flex h-full'>
         <div className="flex my-auto w-2/3 h-full">
             <div className='w-2/3 m-auto'>
                 <MapChart records={data.rows[0].records}/>
@@ -28,6 +28,6 @@ export default function RealtimeDash() {
             </div>
             <RealTimeRowWrapper records={data.rows[0].records}/>
         </div>
-        </>
+        </div>
     )
 }

@@ -11,7 +11,6 @@ type averagePerTimeDistrict = {
 
 export default function HistroricalChart ({records}: {records:averagePerTimeDistrict[]}) {
     const seconds = records.map( record => ({aqi: record.aqi, second: toSeconds(record.time)}))
-    console.log(seconds)
     return (
         <LineChart
             xAxis={[{

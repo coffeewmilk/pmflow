@@ -169,7 +169,7 @@ if __name__ == '__main__':
             .readStream \
             .format("com.pmflow.aqicnSource.read.stream") \
             .option("interval", 5) \
-            .option("key", "[aqicnKey]") \
+            .option("key", "[aqinKey]") \
             .load()
     
     deduplicated = input.withColumn("timestamp", to_timestamp(col("time"))) \
